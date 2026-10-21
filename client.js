@@ -517,7 +517,7 @@ window.__ModuleLoader__.load({
   border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary)}
 .rr-btn:hover{background:var(--dsw-alias-bg-layer-2)}
 .rr-btn:disabled{opacity:.5;cursor:default}
-.rr-btn[data-primary]{background:var(--dsw-alias-brand-primary);border-color:transparent;color:var(--dsw-alias-bg-base)}
+.rr-btn[data-primary]{background:var(--dsw-alias-brand-primary,#2563eb);border-color:transparent;color:var(--dsw-alias-bg-base,#fff)}
 .rr-btn[data-primary]:hover{filter:brightness(1.08)}
 .rr-btn[data-small]{padding:3px 10px;font-size:12px}
 .rr-rest{display:flex;align-items:center;gap:16px;margin:10px 0 12px}
@@ -583,6 +583,51 @@ window.__ModuleLoader__.load({
 .rr-bar[data-today="true"] .rr-bar-fill{background:var(--dsw-alias-brand-primary)}
 .rr-bar-val{font-variant-numeric:tabular-nums}
 `;
+
+    // ---------- primary button ----------
+    // 主按钮背景取主题品牌色（浅色主题偏黑、深色主题偏白），文字颜色不能写死：
+    // 运行时读取实际背景色，按亮度自动选择黑字或白字，主题切换时重新计算。
+    let colorProbe = null;
+    function readRgb(css) {
+      try {
+        if (!colorProbe) colorProbe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+        colorProbe.clearRect(0, 0, 1, 1);
+        colorProbe.fillStyle = '#000';
+        colorProbe.fillStyle = css;
+        colorProbe.fillRect(0, 0, 1, 1);
+        const d = colorProbe.getImageData(0, 0, 1, 1).data;
+        return [d[0], d[1], d[2], d[3]];
+      } catch (e) {
+        return null;
+      }
+    }
+    function PrimaryButton(props) {
+      const ref = React.useRef(null);
+      React.useEffect(() => {
+        const fit = () => {
+          const el = ref.current;
+          if (!el) return;
+          // 取按钮实际背景色；若是透明（变量缺失等），逐级向上找第一个不透明的背景
+          let rgba = null;
+          for (let node = el; node && node.nodeType === 1; node = node.parentElement) {
+            const c = readRgb(window.getComputedStyle(node).backgroundColor);
+            if (c && c[3] > 0) {
+              rgba = c;
+              break;
+            }
+          }
+          if (!rgba) rgba = [255, 255, 255, 255];
+          const lum = 0.299 * rgba[0] + 0.587 * rgba[1] + 0.114 * rgba[2];
+          el.style.setProperty('color', lum > 140 ? '#111' : '#fff', 'important');
+        };
+        fit();
+        const mo = new MutationObserver(fit);
+        mo.observe(document.documentElement, { attributes: true });
+        if (document.body) mo.observe(document.body, { attributes: true });
+        return () => mo.disconnect();
+      });
+      return h('button', { ref, className: 'rr-btn', 'data-primary': 'true', type: 'button', onClick: props.onClick }, props.children);
+    }
 
     // ---------- popup ----------
     function RestRing(props) {
@@ -665,7 +710,7 @@ window.__ModuleLoader__.load({
             h(
               'div',
               { className: 'rr-actions' },
-              h('button', { className: 'rr-btn', 'data-primary': 'true', type: 'button', onClick: () => store.dismissDone() }, t.doneOk),
+              h(PrimaryButton, { onClick: () => store.dismissDone() }, t.doneOk),
             ),
           ),
         );
@@ -682,7 +727,7 @@ window.__ModuleLoader__.load({
             'div',
             { className: 'rr-actions' },
             h('button', { className: 'rr-btn', type: 'button', onClick: () => store.snooze() }, t.snooze(cfg.snoozeMin)),
-            h('button', { className: 'rr-btn', 'data-primary': 'true', type: 'button', onClick: () => store.startRest() }, t.startRest(cfg.restMin)),
+            h(PrimaryButton, { onClick: () => store.startRest() }, t.startRest(cfg.restMin)),
           ),
         ),
       );
