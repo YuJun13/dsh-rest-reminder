@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Rest Reminder",
+    "description": "Tracks how long you have been actively working and reminds you to take a break (default: every 60 minutes of continuous use)."
+  }
+}
