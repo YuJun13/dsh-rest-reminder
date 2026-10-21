@@ -1,6 +1,6 @@
 ﻿# dsh-rest-reminder
 
-[DSH (DeepSeek Harness)](https://github.com/) 的「休息提醒」插件：连续使用一段时间后提醒你起身休息，休息时显示倒计时。
+DSH (DeepSeek Harness) 的「休息提醒」插件：连续使用一段时间后提醒你起身休息，休息时显示倒计时。
 
 ## 功能
 
@@ -32,3 +32,4 @@
 | `index.js` | Host 端入口（空） |
 | `client.js` | 浏览器端：计时、浮层、设置页 |
 | `locale/` | 插件标题与描述 |
+
